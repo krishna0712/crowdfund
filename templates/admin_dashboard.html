@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - CrowdFund Basic{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">
+                <i class="bi bi-speedometer2"></i> Admin Dashboard
+            </h1>
+        </div>
+    </div>
+    
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4>{{ total_projects }}</h4>
+                            <p class="mb-0">Total Projects</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-folder display-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4>{{ total_users }}</h4>
+                            <p class="mb-0">Total Users</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-people display-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4>{{ total_contributions }}</h4>
+                            <p class="mb-0">Total Contributions</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-heart display-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4>${{ "%.0f"|format(total_raised) }}</h4>
+                            <p class="mb-0">Total Raised</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-currency-dollar display-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Recent Projects -->
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-folder-plus"></i> Recent Projects</h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_projects %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Project</th>
+                                        <th>Creator</th>
+                                        <th>Goal</th>
+                                        <th>Created</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for project in recent_projects %}
+                                    <tr>
+                                        <td>
+                                            <a href="{{ url_for('project_detail', id=project.id) }}" class="text-decoration-none">
+                                                {{ project.title[:30] }}{% if project.title|length > 30 %}...{% endif %}
+                                            </a>
+                                        </td>
+                                        <td>{{ project.creator.username }}</td>
+                                        <td>${{ "%.0f"|format(project.funding_goal) }}</td>
+                                        <td>{{ project.created_at.strftime('%m/%d/%Y') }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-center py-3">No projects yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Contributions -->
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-cash-stack"></i> Recent Contributions</h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_contributions %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Contributor</th>
+                                        <th>Amount</th>
+                                        <th>Project</th>
+                                        <th>Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for contribution in recent_contributions %}
+                                    <tr>
+                                        <td>{{ contribution.contributor.username }}</td>
+                                        <td class="contribution-amount">${{ "%.2f"|format(contribution.amount) }}</td>
+                                        <td>
+                                            <a href="{{ url_for('project_detail', id=contribution.project.id) }}" class="text-decoration-none">
+                                                {{ contribution.project.title[:20] }}{% if contribution.project.title|length > 20 %}...{% endif %}
+                                            </a>
+                                        </td>
+                                        <td>{{ contribution.created_at.strftime('%m/%d/%Y') }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-center py-3">No contributions yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

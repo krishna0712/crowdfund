@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}Create Project - CrowdFund Basic{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h2 class="card-title mb-0">
+                        <i class="bi bi-plus-circle"></i> Create New Project
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-4">
+                        Share your vision and start raising funds for your project. 
+                        Be clear and compelling to attract supporters.
+                    </p>
+                    
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="mb-4">
+                            {{ form.title.label(class="form-label") }}
+                            {{ form.title(class="form-control" + (" is-invalid" if form.title.errors else ""), 
+                                placeholder="Enter a compelling project title") }}
+                            {% if form.title.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.title.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Choose a clear, descriptive title that explains what you're creating.</div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            {{ form.description.label(class="form-label") }}
+                            {{ form.description(class="form-control" + (" is-invalid" if form.description.errors else ""), 
+                                rows="8", placeholder="Describe your project in detail...") }}
+                            {% if form.description.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.description.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                Explain what you're creating, why it matters, and how the funds will be used. 
+                                Be specific and passionate about your project.
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-4">
+                                    {{ form.funding_goal.label(class="form-label") }}
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        {{ form.funding_goal(class="form-control" + (" is-invalid" if form.funding_goal.errors else ""), 
+                                            placeholder="5000.00") }}
+                                        {% if form.funding_goal.errors %}
+                                            <div class="invalid-feedback">
+                                                {% for error in form.funding_goal.errors %}
+                                                    {{ error }}
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="form-text">Set a realistic funding goal for your project.</div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-4">
+                                    {{ form.category.label(class="form-label") }}
+                                    {{ form.category(class="form-select" + (" is-invalid" if form.category.errors else "")) }}
+                                    {% if form.category.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.category.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    <div class="form-text">Choose the category that best fits your project.</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <h6><i class="bi bi-lightbulb"></i> Tips for Success:</h6>
+                            <ul class="mb-0">
+                                <li>Write a compelling description that tells a story</li>
+                                <li>Set a realistic funding goal based on your actual needs</li>
+                                <li>Be transparent about how you'll use the funds</li>
+                                <li>Engage with your supporters and provide updates</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('home') }}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Cancel
+                            </a>
+                            {{ form.submit(class="btn btn-success btn-lg") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

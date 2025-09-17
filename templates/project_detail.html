@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+
+{% block title %}{{ project.title }} - CrowdFund Basic{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="row">
+        <!-- Project Details -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h1 class="card-title mb-0">{{ project.title }}</h1>
+                        <span class="badge bg-secondary fs-6">{{ project.category.name }}</span>
+                    </div>
+                    <small class="text-muted">
+                        by {{ project.creator.username }} • Created {{ project.created_at.strftime('%B %d, %Y') }}
+                    </small>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h5>Project Description</h5>
+                        <p class="lead">{{ project.description }}</p>
+                    </div>
+                    
+                    <!-- Project Owner Actions -->
+                    {% if current_user.is_authenticated and current_user.id == project.user_id %}
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> This is your project.
+                        <a href="{{ url_for('project_contributions', project_id=project.id) }}" class="btn btn-sm btn-outline-primary ms-2">
+                            View All Contributions
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Recent Contributions -->
+            {% if contributions %}
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5><i class="bi bi-people"></i> Recent Backers</h5>
+                </div>
+                <div class="card-body">
+                    {% for contribution in contributions %}
+                    <div class="d-flex justify-content-between align-items-center py-2 {% if not loop.last %}border-bottom{% endif %}">
+                        <div>
+                            <strong>{{ contribution.contributor.username }}</strong>
+                            <small class="text-muted d-block">{{ contribution.created_at.strftime('%b %d, %Y at %I:%M %p') }}</small>
+                        </div>
+                        <span class="contribution-amount">${{ "%.2f"|format(contribution.amount) }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Funding Panel -->
+        <div class="col-lg-4">
+            <div class="card sticky-top" style="top: 20px;">
+                <div class="card-body">
+                    <div class="text-center mb-3">
+                        <h2 class="contribution-amount">${{ "%.2f"|format(total_raised) }}</h2>
+                        <p class="text-muted mb-1">raised of ${{ "%.2f"|format(project.funding_goal) }} goal</p>
+                    </div>
+                    
+                    <div class="progress mb-3" style="height: 10px;">
+                        <div class="progress-bar bg-success" role="progressbar" 
+                             style="width: {{ progress_percentage }}%" 
+                             aria-valuenow="{{ progress_percentage }}" 
+                             aria-valuemin="0" 
+                             aria-valuemax="100">
+                        </div>
+                    </div>
+                    
+                    <div class="row text-center mb-4">
+                        <div class="col-6">
+                            <h6 class="mb-0">{{ "%.1f"|format(progress_percentage) }}%</h6>
+                            <small class="text-muted">Funded</small>
+                        </div>
+                        <div class="col-6">
+                            <h6 class="mb-0">{{ project.get_contribution_count() }}</h6>
+                            <small class="text-muted">Backers</small>
+                        </div>
+                    </div>
+                    
+                    <!-- Contribution Form -->
+                    {% if current_user.is_authenticated %}
+                        {% if current_user.id != project.user_id %}
+                        <form method="POST" action="{{ url_for('contribute', project_id=project.id) }}">
+                            {{ contribution_form.hidden_tag() }}
+                            <div class="mb-3">
+                                {{ contribution_form.amount.label(class="form-label") }}
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    {{ contribution_form.amount(class="form-control" + (" is-invalid" if contribution_form.amount.errors else ""), placeholder="25.00") }}
+                                    {% if contribution_form.amount.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in contribution_form.amount.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="d-grid">
+                                {{ contribution_form.submit(class="btn btn-success btn-lg") }}
+                            </div>
+                        </form>
+                        {% else %}
+                        <div class="alert alert-warning text-center">
+                            <i class="bi bi-exclamation-triangle"></i><br>
+                            You cannot contribute to your own project.
+                        </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center">
+                            <p class="text-muted mb-3">Please log in to contribute to this project.</p>
+                            <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg">Login to Contribute</a>
+                        </div>
+                    {% endif %}
+                    
+                    <hr>
+                    
+                    <!-- Quick Amount Buttons -->
+                    {% if current_user.is_authenticated and current_user.id != project.user_id %}
+                    <div class="text-center">
+                        <small class="text-muted d-block mb-2">Quick amounts:</small>
+                        <div class="btn-group-vertical d-grid gap-1">
+                            <button type="button" class="btn btn-outline-secondary btn-sm quick-amount" data-amount="10">$10</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm quick-amount" data-amount="25">$25</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm quick-amount" data-amount="50">$50</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm quick-amount" data-amount="100">$100</button>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Comments Section -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-chat-dots"></i> Comments ({{ comments|length }})</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Add Comment Form -->
+                    {% if current_user.is_authenticated %}
+                    <form method="POST" action="{{ url_for('add_comment', project_id=project.id) }}" class="mb-4">
+                        {{ comment_form.hidden_tag() }}
+                        <div class="mb-3">
+                            {{ comment_form.comment.label(class="form-label") }}
+                            {{ comment_form.comment(class="form-control" + (" is-invalid" if comment_form.comment.errors else ""), 
+                                rows="3", placeholder="Share your thoughts about this project...") }}
+                            {% if comment_form.comment.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in comment_form.comment.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="text-end">
+                            {{ comment_form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> Please <a href="{{ url_for('login') }}">log in</a> to leave a comment.
+                    </div>
+                    {% endif %}
+                    
+                    <hr>
+                    
+                    <!-- Display Comments -->
+                    {% if comments %}
+                        <div class="comments-list">
+                            {% for comment in comments|reverse %}
+                            <div class="comment mb-3 p-3 border rounded">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <strong class="text-primary">
+                                        <i class="bi bi-person-circle"></i> {{ comment.username }}
+                                    </strong>
+                                    <small class="text-muted">
+                                        {{ comment.created_at.split('T')[0] }} at {{ comment.created_at.split('T')[1].split('.')[0] if '.' in comment.created_at else comment.created_at.split('T')[1] }}
+                                    </small>
+                                </div>
+                                <p class="mb-0">{{ comment.comment }}</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="bi bi-chat display-4 text-muted"></i>
+                            <p class="text-muted mt-2">No comments yet. Be the first to share your thoughts!</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const quickAmountButtons = document.querySelectorAll('.quick-amount');
+    const amountInput = document.getElementById('amount');
+    
+    quickAmountButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const amount = this.getAttribute('data-amount');
+            if (amountInput) {
+                amountInput.value = amount;
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
