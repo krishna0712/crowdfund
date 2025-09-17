@@ -274,8 +274,20 @@ def logout():
 def projects():
     page = request.args.get('page', 1, type=int)
     category_id = request.args.get('category', type=int)
+    search_query = request.args.get('search', '', type=str)
     
     query = Project.query
+    
+    # Apply search filter
+    if search_query:
+        query = query.filter(
+            db.or_(
+                Project.title.contains(search_query),
+                Project.description.contains(search_query)
+            )
+        )
+    
+    # Apply category filter
     if category_id:
         query = query.filter_by(category_id=category_id)
     
@@ -284,7 +296,11 @@ def projects():
     )
     
     categories = Category.query.all()
-    return render_template('projects.html', projects=projects, categories=categories, selected_category=category_id)
+    return render_template('projects.html', 
+                         projects=projects, 
+                         categories=categories, 
+                         selected_category=category_id,
+                         search_query=search_query)
 
 @app.route('/project/<int:id>')
 def project_detail(id):
@@ -454,4 +470,4 @@ if __name__ == '__main__':
         db.create_all()
         create_default_data()
     
-    app.run(debug=True,port=5000)
+    app.run(debug=False,host ='0.0.0.0')

@@ -58,15 +58,15 @@
         
         <!-- Funding Panel -->
         <div class="col-lg-4">
-            <div class="card sticky-top" style="top: 20px;">
+            <div class="card sticky-top shadow-lg border-0" style="top: 20px;">
                 <div class="card-body">
                     <div class="text-center mb-3">
                         <h2 class="contribution-amount">${{ "%.2f"|format(total_raised) }}</h2>
                         <p class="text-muted mb-1">raised of ${{ "%.2f"|format(project.funding_goal) }} goal</p>
                     </div>
                     
-                    <div class="progress mb-3" style="height: 10px;">
-                        <div class="progress-bar bg-success" role="progressbar" 
+                    <div class="progress mb-3" style="height: 12px;">
+                        <div class="progress-bar" role="progressbar" 
                              style="width: {{ progress_percentage }}%" 
                              aria-valuenow="{{ progress_percentage }}" 
                              aria-valuemin="0" 
@@ -75,13 +75,23 @@
                     </div>
                     
                     <div class="row text-center mb-4">
-                        <div class="col-6">
-                            <h6 class="mb-0">{{ "%.1f"|format(progress_percentage) }}%</h6>
-                            <small class="text-muted">Funded</small>
+                        <div class="col-4">
+                            <div class="stats-card p-2 rounded">
+                                <h6 class="mb-0 fw-bold">{{ "%.1f"|format(progress_percentage) }}%</h6>
+                                <small class="text-muted">Funded</small>
+                            </div>
                         </div>
-                        <div class="col-6">
-                            <h6 class="mb-0">{{ project.get_contribution_count() }}</h6>
-                            <small class="text-muted">Backers</small>
+                        <div class="col-4">
+                            <div class="stats-card p-2 rounded">
+                                <h6 class="mb-0 fw-bold">{{ project.get_contribution_count() }}</h6>
+                                <small class="text-muted">Backers</small>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="stats-card p-2 rounded">
+                                <h6 class="mb-0 fw-bold">{{ comments|length }}</h6>
+                                <small class="text-muted">Comments</small>
+                            </div>
                         </div>
                     </div>
                     
@@ -91,7 +101,7 @@
                         <form method="POST" action="{{ url_for('contribute', project_id=project.id) }}">
                             {{ contribution_form.hidden_tag() }}
                             <div class="mb-3">
-                                {{ contribution_form.amount.label(class="form-label") }}
+                                {{ contribution_form.amount.label(class="form-label fw-bold") }}
                                 <div class="input-group">
                                     <span class="input-group-text">$</span>
                                     {{ contribution_form.amount(class="form-control" + (" is-invalid" if contribution_form.amount.errors else ""), placeholder="25.00") }}
@@ -105,19 +115,25 @@
                                 </div>
                             </div>
                             <div class="d-grid">
-                                {{ contribution_form.submit(class="btn btn-success btn-lg") }}
+                                {{ contribution_form.submit(class="btn btn-gradient btn-lg") }}
                             </div>
                         </form>
                         {% else %}
-                        <div class="alert alert-warning text-center">
-                            <i class="bi bi-exclamation-triangle"></i><br>
-                            You cannot contribute to your own project.
+                        <div class="alert alert-warning text-center border-0" style="background: linear-gradient(45deg, rgba(255,193,7,0.1), rgba(255,193,7,0.05));">
+                            <i class="bi bi-exclamation-triangle text-warning"></i><br>
+                            <strong>This is your project</strong><br>
+                            <small>You cannot contribute to your own project</small>
                         </div>
                         {% endif %}
                     {% else %}
                         <div class="text-center">
-                            <p class="text-muted mb-3">Please log in to contribute to this project.</p>
-                            <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg">Login to Contribute</a>
+                            <p class="text-muted mb-3">Join our community to support this project!</p>
+                            <a href="{{ url_for('login') }}" class="btn btn-gradient btn-lg w-100 mb-2">
+                                <i class="bi bi-box-arrow-in-right"></i> Login to Contribute
+                            </a>
+                            <a href="{{ url_for('register') }}" class="btn btn-outline-secondary">
+                                New here? <strong>Sign up</strong>
+                            </a>
                         </div>
                     {% endif %}
                     
@@ -127,11 +143,21 @@
                     {% if current_user.is_authenticated and current_user.id != project.user_id %}
                     <div class="text-center">
                         <small class="text-muted d-block mb-2">Quick amounts:</small>
-                        <div class="btn-group-vertical d-grid gap-1">
-                            <button type="button" class="btn btn-outline-secondary btn-sm quick-amount" data-amount="10">$10</button>
-                            <button type="button" class="btn btn-outline-secondary btn-sm quick-amount" data-amount="25">$25</button>
-                            <button type="button" class="btn btn-outline-secondary btn-sm quick-amount" data-amount="50">$50</button>
-                            <button type="button" class="btn btn-outline-secondary btn-sm quick-amount" data-amount="100">$100</button>
+                        <div class="d-grid gap-1">
+                            <div class="row g-1">
+                                <div class="col-6">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm w-100 quick-amount" data-amount="10">$10</button>
+                                </div>
+                                <div class="col-6">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm w-100 quick-amount" data-amount="25">$25</button>
+                                </div>
+                                <div class="col-6">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm w-100 quick-amount" data-amount="50">$50</button>
+                                </div>
+                                <div class="col-6">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm w-100 quick-amount" data-amount="100">$100</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     {% endif %}
@@ -143,60 +169,85 @@
     <!-- Comments Section -->
     <div class="row mt-4">
         <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5><i class="bi bi-chat-dots"></i> Comments ({{ comments|length }})</h5>
+            <div class="card shadow-lg border-0">
+                <div class="card-header" style="background: linear-gradient(45deg, #667eea, #764ba2); color: white;">
+                    <h5 class="mb-0">
+                        <i class="bi bi-chat-dots"></i> Comments ({{ comments|length }})
+                    </h5>
                 </div>
                 <div class="card-body">
                     <!-- Add Comment Form -->
                     {% if current_user.is_authenticated %}
-                    <form method="POST" action="{{ url_for('add_comment', project_id=project.id) }}" class="mb-4">
-                        {{ comment_form.hidden_tag() }}
-                        <div class="mb-3">
-                            {{ comment_form.comment.label(class="form-label") }}
-                            {{ comment_form.comment(class="form-control" + (" is-invalid" if comment_form.comment.errors else ""), 
-                                rows="3", placeholder="Share your thoughts about this project...") }}
-                            {% if comment_form.comment.errors %}
-                                <div class="invalid-feedback">
-                                    {% for error in comment_form.comment.errors %}
-                                        {{ error }}
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
-                        </div>
-                        <div class="text-end">
-                            {{ comment_form.submit(class="btn btn-primary") }}
-                        </div>
-                    </form>
+                    <div class="comment-form-section mb-4 p-3 rounded" style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.02) 100%);">
+                        <h6 class="mb-3">
+                            <i class="bi bi-person-circle text-primary"></i> Share your thoughts
+                        </h6>
+                        <form method="POST" action="{{ url_for('add_comment', project_id=project.id) }}">
+                            {{ comment_form.hidden_tag() }}
+                            <div class="mb-3">
+                                {{ comment_form.comment(class="form-control" + (" is-invalid" if comment_form.comment.errors else ""), 
+                                    rows="3", placeholder="What do you think about this project? Share your thoughts, questions, or encouragement...") }}
+                                {% if comment_form.comment.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in comment_form.comment.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="text-end">
+                                {{ comment_form.submit(class="btn btn-gradient") }}
+                            </div>
+                        </form>
+                    </div>
                     {% else %}
-                    <div class="alert alert-info">
-                        <i class="bi bi-info-circle"></i> Please <a href="{{ url_for('login') }}">log in</a> to leave a comment.
+                    <div class="alert alert-info border-0" style="background: linear-gradient(45deg, rgba(13,202,240,0.1), rgba(13,202,240,0.05));">
+                        <i class="bi bi-info-circle text-info"></i> 
+                        <strong>Join the conversation!</strong> 
+                        <a href="{{ url_for('login') }}" class="alert-link">Log in</a> or 
+                        <a href="{{ url_for('register') }}" class="alert-link">sign up</a> to leave a comment.
                     </div>
                     {% endif %}
-                    
-                    <hr>
                     
                     <!-- Display Comments -->
                     {% if comments %}
                         <div class="comments-list">
+                            <h6 class="mb-3 text-muted">
+                                <i class="bi bi-chat-square-text"></i> Community Discussion
+                            </h6>
                             {% for comment in comments|reverse %}
-                            <div class="comment mb-3 p-3 border rounded">
+                            <div class="comment mb-3 p-3 rounded comment-card">
                                 <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <strong class="text-primary">
-                                        <i class="bi bi-person-circle"></i> {{ comment.username }}
-                                    </strong>
-                                    <small class="text-muted">
-                                        {{ comment.created_at.split('T')[0] }} at {{ comment.created_at.split('T')[1].split('.')[0] if '.' in comment.created_at else comment.created_at.split('T')[1] }}
-                                    </small>
+                                    <div class="d-flex align-items-center">
+                                        <div class="feature-icon me-2" style="width: 40px; height: 40px; font-size: 1rem;">
+                                            <i class="bi bi-person"></i>
+                                        </div>
+                                        <div>
+                                            <strong class="text-primary">{{ comment.username }}</strong>
+                                            <br>
+                                            <small class="text-muted">
+                                                <i class="bi bi-calendar3"></i> 
+                                                {{ comment.created_at.split('T')[0] }}
+                                                <i class="bi bi-clock ms-2"></i>
+                                                {{ comment.created_at.split('T')[1].split('.')[0] if '.' in comment.created_at else comment.created_at.split('T')[1] }}
+                                            </small>
+                                        </div>
+                                    </div>
+                                    {% if current_user.is_authenticated and current_user.username == comment.username %}
+                                    <small class="badge bg-success">Your comment</small>
+                                    {% endif %}
                                 </div>
-                                <p class="mb-0">{{ comment.comment }}</p>
+                                <p class="mb-0 ms-5">{{ comment.comment }}</p>
                             </div>
                             {% endfor %}
                         </div>
                     {% else %}
                         <div class="text-center py-4">
-                            <i class="bi bi-chat display-4 text-muted"></i>
-                            <p class="text-muted mt-2">No comments yet. Be the first to share your thoughts!</p>
+                            <div class="feature-icon" style="background: linear-gradient(45deg, #6c757d, #adb5bd);">
+                                <i class="bi bi-chat"></i>
+                            </div>
+                            <h5 class="mt-3">No comments yet</h5>
+                            <p class="text-muted">Be the first to share your thoughts about this project!</p>
                         </div>
                     {% endif %}
                 </div>

@@ -1,116 +1,135 @@
-{% extends "base.html" %}
-
-{% block title %}{{ project.title }} - Contributions{% endblock %}
-
-{% block content %}
+{% extends "base.html" %} {% block title %}{{ project.title }} - Contributions{%
+endblock %} {% block content %}
 <div class="container my-4">
-    <div class="row">
-        <div class="col-12">
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{{ url_for('my_projects') }}">My Projects</a></li>
-                    <li class="breadcrumb-item"><a href="{{ url_for('project_detail', id=project.id) }}">{{ project.title }}</a></li>
-                    <li class="breadcrumb-item active">Contributions</li>
-                </ol>
-            </nav>
-        </div>
+  <div class="row">
+    <div class="col-12">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item">
+            <a href="{{ url_for('my_projects') }}">My Projects</a>
+          </li>
+          <li class="breadcrumb-item">
+            <a href="{{ url_for('project_detail', id=project.id) }}"
+              >{{ project.title }}</a
+            >
+          </li>
+          <li class="breadcrumb-item active">Contributions</li>
+        </ol>
+      </nav>
     </div>
-    
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h2 class="card-title mb-0">
-                        <i class="bi bi-people"></i> Contributions for "{{ project.title }}"
-                    </h2>
-                </div>
-                <div class="card-body">
-                    <!-- Summary Stats -->
-                    <div class="row mb-4">
-                        <div class="col-md-3 text-center">
-                            <h4 class="contribution-amount">${{ "%.2f"|format(total_raised) }}</h4>
-                            <small class="text-muted">Total Raised</small>
-                        </div>
-                        <div class="col-md-3 text-center">
-                            <h4 class="text-primary">{{ contributions|length }}</h4>
-                            <small class="text-muted">Total Contributions</small>
-                        </div>
-                        <div class="col-md-3 text-center">
-                            <h4 class="text-info">${{ "%.2f"|format(project.funding_goal) }}</h4>
-                            <small class="text-muted">Funding Goal</small>
-                        </div>
-                        <div class="col-md-3 text-center">
-                            {% set progress = (total_raised / project.funding_goal * 100) if project.funding_goal > 0 else 0 %}
-                            <h4 class="text-success">{{ "%.1f"|format(progress) }}%</h4>
-                            <small class="text-muted">Progress</small>
-                        </div>
-                    </div>
-                    
-                    <div class="progress mb-4">
-                        <div class="progress-bar bg-success" role="progressbar" 
-                             style="width: {{ min(progress, 100) }}%">
-                        </div>
-                    </div>
-                </div>
+  </div>
+
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title mb-0">
+            <i class="bi bi-people"></i> Contributions for "{{ project.title }}"
+          </h2>
+        </div>
+        <div class="card-body">
+          <!-- Summary Stats -->
+          <div class="row mb-4">
+            <div class="col-md-3 text-center">
+              <h4 class="contribution-amount">
+                ${{ "%.2f"|format(total_raised) }}
+              </h4>
+              <small class="text-muted">Total Raised</small>
             </div>
+            <div class="col-md-3 text-center">
+              <h4 class="text-primary">{{ contributions|length }}</h4>
+              <small class="text-muted">Total Contributions</small>
+            </div>
+            <div class="col-md-3 text-center">
+              <h4 class="text-info">
+                ${{ "%.2f"|format(project.funding_goal) }}
+              </h4>
+              <small class="text-muted">Funding Goal</small>
+            </div>
+            <div class="col-md-3 text-center">
+              {% set progress = (total_raised / project.funding_goal * 100) if
+              project.funding_goal > 0 else 0 %}
+              <h4 class="text-success">{{ "%.1f"|format(progress) }}%</h4>
+              <small class="text-muted">Progress</small>
+            </div>
+          </div>
+
+          <div class="progress mb-4">
+            <div
+              class="progress-bar bg-success"
+              role="progressbar"
+              style="width: {{ [progress, 100] | min }}%"
+            ></div>
+          </div>
         </div>
+      </div>
     </div>
-    
-    <div class="row mt-4">
-        <div class="col-12">
-            {% if contributions %}
-                <div class="card">
-                    <div class="card-header">
-                        <h5><i class="bi bi-list-ul"></i> All Contributions</h5>
-                    </div>
-                    <div class="card-body p-0">
-                        <div class="table-responsive">
-                            <table class="table table-hover mb-0">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Contributor</th>
-                                        <th>Amount</th>
-                                        <th>Date</th>
-                                        <th>Time</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for contribution in contributions %}
-                                    <tr>
-                                        <td>
-                                            <i class="bi bi-person-circle text-muted me-2"></i>
-                                            {{ contribution.contributor.username }}
-                                        </td>
-                                        <td>
-                                            <span class="contribution-amount">${{ "%.2f"|format(contribution.amount) }}</span>
-                                        </td>
-                                        <td>{{ contribution.created_at.strftime('%B %d, %Y') }}</td>
-                                        <td>{{ contribution.created_at.strftime('%I:%M %p') }}</td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    <div class="card-footer">
-                        <small class="text-muted">
-                            Showing all {{ contributions|length }} contribution(s) for this project.
-                        </small>
-                    </div>
-                </div>
-            {% else %}
-                <div class="card">
-                    <div class="card-body text-center py-5">
-                        <i class="bi bi-inbox display-1 text-muted"></i>
-                        <h4 class="mt-3">No contributions yet</h4>
-                        <p class="text-muted">Your project hasn't received any contributions yet. Share it with others to get started!</p>
-                        <a href="{{ url_for('project_detail', id=project.id) }}" class="btn btn-primary">
-                            <i class="bi bi-arrow-left"></i> Back to Project
-                        </a>
-                    </div>
-                </div>
-            {% endif %}
+  </div>
+
+  <div class="row mt-4">
+    <div class="col-12">
+      {% if contributions %}
+      <div class="card">
+        <div class="card-header">
+          <h5><i class="bi bi-list-ul"></i> All Contributions</h5>
         </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Contributor</th>
+                  <th>Amount</th>
+                  <th>Date</th>
+                  <th>Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for contribution in contributions %}
+                <tr>
+                  <td>
+                    <i class="bi bi-person-circle text-muted me-2"></i>
+                    {{ contribution.contributor.username }}
+                  </td>
+                  <td>
+                    <span class="contribution-amount"
+                      >${{ "%.2f"|format(contribution.amount) }}</span
+                    >
+                  </td>
+                  <td>{{ contribution.created_at.strftime('%B %d, %Y') }}</td>
+                  <td>{{ contribution.created_at.strftime('%I:%M %p') }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card-footer">
+          <small class="text-muted">
+            Showing all {{ contributions|length }} contribution(s) for this
+            project.
+          </small>
+        </div>
+      </div>
+      {% else %}
+      <div class="card">
+        <div class="card-body text-center py-5">
+          <i class="bi bi-inbox display-1 text-muted"></i>
+          <h4 class="mt-3">No contributions yet</h4>
+          <p class="text-muted">
+            Your project hasn't received any contributions yet. Share it with
+            others to get started!
+          </p>
+          <a
+            href="{{ url_for('project_detail', id=project.id) }}"
+            class="btn btn-primary"
+          >
+            <i class="bi bi-arrow-left"></i> Back to Project
+          </a>
+        </div>
+      </div>
+      {% endif %}
     </div>
+  </div>
 </div>
 {% endblock %}

@@ -4,24 +4,32 @@
 
 {% block content %}
 <!-- Hero Section -->
-<div class="bg-light py-5">
+<div class="hero-section py-5">
     <div class="container">
         <div class="row align-items-center">
             <div class="col-lg-6">
-                <h1 class="display-4 fw-bold">Fund the Future</h1>
-                <p class="lead">Discover amazing projects and help bring innovative ideas to life. Start your own campaign or support others in making a difference.</p>
+                <h1 class="display-4 fw-bold mb-4">Fund the Future</h1>
+                <p class="lead mb-4">Discover amazing projects and help bring innovative ideas to life. Start your own campaign or support others in making a difference.</p>
                 <div class="d-grid gap-2 d-md-flex justify-content-md-start">
                     {% if current_user.is_authenticated %}
-                        <a href="{{ url_for('create_project') }}" class="btn btn-primary btn-lg px-4 me-md-2">Start a Project</a>
+                        <a href="{{ url_for('create_project') }}" class="btn btn-gradient btn-lg px-4 me-md-2">
+                            <i class="bi bi-rocket-takeoff"></i> Start a Project
+                        </a>
                     {% else %}
-                        <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg px-4 me-md-2">Get Started</a>
+                        <a href="{{ url_for('register') }}" class="btn btn-gradient btn-lg px-4 me-md-2">
+                            <i class="bi bi-person-plus"></i> Get Started
+                        </a>
                     {% endif %}
-                    <a href="{{ url_for('projects') }}" class="btn btn-outline-secondary btn-lg px-4">Browse Projects</a>
+                    <a href="{{ url_for('projects') }}" class="btn btn-outline-light btn-lg px-4">
+                        <i class="bi bi-search"></i> Browse Projects
+                    </a>
                 </div>
             </div>
             <div class="col-lg-6">
                 <div class="text-center">
-                    <i class="bi bi-lightbulb display-1 text-warning"></i>
+                    <div class="feature-icon" style="width: 150px; height: 150px; font-size: 4rem; margin: 0 auto;">
+                        <i class="bi bi-lightbulb"></i>
+                    </div>
                 </div>
             </div>
         </div>
@@ -49,12 +57,12 @@
                         <div class="mb-3">
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <span class="text-muted small">Goal: ${{ "%.2f"|format(project.funding_goal) }}</span>
-                                <span class="badge bg-secondary">{{ project.category.name }}</span>
+                                <span class="badge category-badge">{{ project.category.name }}</span>
                             </div>
                             <div class="progress mb-2">
                                 {% set total_raised = project.get_total_raised() %}
                                 {% set progress = project.get_progress_percentage() %}
-                                <div class="progress-bar bg-success" role="progressbar" 
+                                <div class="progress-bar" role="progressbar" 
                                      style="width: {{ progress }}%" 
                                      aria-valuenow="{{ progress }}" 
                                      aria-valuemin="0" 
@@ -62,13 +70,17 @@
                                 </div>
                             </div>
                             <div class="d-flex justify-content-between">
-                                <small class="text-success fw-bold">${{ "%.2f"|format(total_raised) }} raised</small>
+                                <small class="contribution-amount">${{ "%.2f"|format(total_raised) }} raised</small>
                                 <small class="text-muted">{{ project.get_contribution_count() }} backers</small>
                             </div>
                         </div>
                         <div class="d-flex justify-content-between align-items-center">
-                            <small class="text-muted">by {{ project.creator.username }}</small>
-                            <a href="{{ url_for('project_detail', id=project.id) }}" class="btn btn-primary btn-sm">View Project</a>
+                            <small class="text-muted">
+                                <i class="bi bi-person"></i> {{ project.creator.username }}
+                            </small>
+                            <a href="{{ url_for('project_detail', id=project.id) }}" class="btn btn-gradient btn-sm">
+                                <i class="bi bi-eye"></i> View Project
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -77,7 +89,9 @@
         </div>
         
         <div class="text-center mt-4">
-            <a href="{{ url_for('projects') }}" class="btn btn-outline-primary">View All Projects</a>
+            <a href="{{ url_for('projects') }}" class="btn btn-gradient btn-lg">
+                <i class="bi bi-arrow-right"></i> View All Projects
+            </a>
         </div>
     {% else %}
         <div class="text-center py-5">
@@ -94,7 +108,7 @@
 </div>
 
 <!-- Features Section -->
-<div class="bg-light py-5">
+<div class="py-5" style="background: linear-gradient(135deg, #f8f9ff 0%, #e6f3ff 100%);">
     <div class="container">
         <div class="row">
             <div class="col-12">
@@ -103,19 +117,25 @@
         </div>
         <div class="row">
             <div class="col-md-4 text-center mb-4">
-                <i class="bi bi-shield-check display-4 text-primary mb-3"></i>
-                <h4>Secure</h4>
-                <p>Your contributions are safe with our secure payment system.</p>
+                <div class="feature-icon">
+                    <i class="bi bi-shield-check"></i>
+                </div>
+                <h4>Secure & Safe</h4>
+                <p class="text-muted">Your contributions are protected with our secure payment system and trusted platform.</p>
             </div>
             <div class="col-md-4 text-center mb-4">
-                <i class="bi bi-people display-4 text-primary mb-3"></i>
-                <h4>Community</h4>
-                <p>Join a community of innovators and supporters working together.</p>
+                <div class="feature-icon">
+                    <i class="bi bi-people"></i>
+                </div>
+                <h4>Community Driven</h4>
+                <p class="text-muted">Join a vibrant community of innovators and supporters working together to bring ideas to life.</p>
             </div>
             <div class="col-md-4 text-center mb-4">
-                <i class="bi bi-graph-up display-4 text-primary mb-3"></i>
-                <h4>Success</h4>
-                <p>Help bring creative projects to life and make a real impact.</p>
+                <div class="feature-icon">
+                    <i class="bi bi-graph-up"></i>
+                </div>
+                <h4>Proven Success</h4>
+                <p class="text-muted">Help bring creative projects to life and make a real impact in the world.</p>
             </div>
         </div>
     </div>
