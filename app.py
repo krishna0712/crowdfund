@@ -7,12 +7,25 @@ from wtforms import StringField, TextAreaField, FloatField, SelectField, Passwor
 from wtforms.validators import DataRequired, Email, Length, NumberRange, EqualTo, ValidationError
 from datetime import datetime
 import os
+import logging
+
+# Set up logging to debug database operations
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 # Initialize Flask app
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key-change-in-production'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///crowdfund.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = "mysql+mysqlconnector://krishna:mysql%40123@localhost:3306/crowdfund"
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    'pool_pre_ping': True,
+    'pool_recycle': 300,
+    'pool_timeout': 20,
+    'pool_size': 10,
+    'max_overflow': 20
+}
 
 # Initialize extensions
 db = SQLAlchemy(app)
@@ -28,7 +41,7 @@ class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
-    password_hash = db.Column(db.String(200), nullable=False)
+    password_hash = db.Column(db.String(255), nullable=False)  # Increased length for MySQL
     is_admin = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
@@ -59,7 +72,7 @@ class Project(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text, nullable=False)
-    funding_goal = db.Column(db.Float, nullable=False)
+    funding_goal = db.Column(db.DECIMAL(10, 2), nullable=False)  # Better for currency in MySQL
     comments = db.Column(db.Text, default='')  # Comments as JSON string or simple text
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
@@ -72,15 +85,15 @@ class Project(db.Model):
     
     def get_total_raised(self):
         """Calculate total amount raised for this project"""
-        total = sum([contrib.amount for contrib in self.contributions])
+        total = sum([float(contrib.amount) for contrib in self.contributions])
         return total
     
     def get_progress_percentage(self):
         """Calculate funding progress as percentage"""
-        if self.funding_goal <= 0:
+        if float(self.funding_goal) <= 0:
             return 0
         total_raised = self.get_total_raised()
-        progress = (total_raised / self.funding_goal) * 100
+        progress = (total_raised / float(self.funding_goal)) * 100
         return min(progress, 100)  # Cap at 100%
     
     def get_contribution_count(self):
@@ -116,7 +129,7 @@ class Contribution(db.Model):
     __tablename__ = 'contributions'
     
     id = db.Column(db.Integer, primary_key=True)
-    amount = db.Column(db.Float, nullable=False)
+    amount = db.Column(db.DECIMAL(10, 2), nullable=False)  # Better for currency in MySQL
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Foreign Keys
@@ -237,16 +250,23 @@ def register():
             return render_template('register.html', form=form)
         
         # Create new user
-        user = User(
-            username=form.username.data,
-            email=form.email.data,
-            password_hash=generate_password_hash(form.password.data)
-        )
-        db.session.add(user)
-        db.session.commit()
-        
-        flash('Registration successful! You can now log in.', 'success')
-        return redirect(url_for('login'))
+        try:
+            user = User(
+                username=form.username.data,
+                email=form.email.data,
+                password_hash=generate_password_hash(form.password.data)
+            )
+            db.session.add(user)
+            db.session.commit()
+            
+            logger.info(f"New user registered: {user.username} ({user.email})")
+            flash('Registration successful! You can now log in.', 'success')
+            return redirect(url_for('login'))
+            
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Error creating user: {str(e)}")
+            flash('Registration failed. Please try again.', 'danger')
     
     return render_template('register.html', form=form)
 
@@ -354,15 +374,22 @@ def contribute(project_id):
     form = ContributionForm()
     
     if form.validate_on_submit():
-        contribution = Contribution(
-            amount=form.amount.data,
-            user_id=current_user.id,
-            project_id=project_id
-        )
-        db.session.add(contribution)
-        db.session.commit()
-        
-        flash(f'Thank you for your contribution of ${form.amount.data}!', 'success')
+        try:
+            contribution = Contribution(
+                amount=form.amount.data,
+                user_id=current_user.id,
+                project_id=project_id
+            )
+            db.session.add(contribution)
+            db.session.commit()
+            
+            logger.info(f"New contribution: ${form.amount.data} by {current_user.username} to project {project_id}")
+            flash(f'Thank you for your contribution of ${form.amount.data}!', 'success')
+            
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Error creating contribution: {str(e)}")
+            flash('Contribution failed. Please try again.', 'danger')
     else:
         flash('Invalid contribution amount.', 'danger')
     
@@ -445,29 +472,85 @@ def admin_dashboard():
 
 def create_default_data():
     """Create default categories and admin user"""
-    # Create categories if they don't exist
-    categories = ['Technology', 'Education', 'Art', 'Health', 'Environment', 'Community']
-    for cat_name in categories:
-        if not Category.query.filter_by(name=cat_name).first():
-            category = Category(name=cat_name, description=f'{cat_name} projects')
-            db.session.add(category)
+    try:
+        # Create categories if they don't exist
+        categories = ['Technology', 'Education', 'Art', 'Health', 'Environment', 'Community']
+        for cat_name in categories:
+            if not Category.query.filter_by(name=cat_name).first():
+                category = Category(name=cat_name, description=f'{cat_name} projects')
+                db.session.add(category)
+                logger.info(f"Created category: {cat_name}")
+        
+        # Create admin user if it doesn't exist
+        admin_email = 'admin@crowdfund.com'
+        if not User.query.filter_by(email=admin_email).first():
+            admin = User(
+                username='admin',
+                email=admin_email,
+                password_hash=generate_password_hash('admin123'),
+                is_admin=True
+            )
+            db.session.add(admin)
+            logger.info(f"Created admin user: {admin_email}")
+        
+        db.session.commit()
+        logger.info("Default data creation completed")
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error creating default data: {str(e)}")
+
+# Add route to check database connectivity
+@app.route('/debug/db-info')
+def debug_db_info():
+    """Debug route to check database connection and data"""
+    if not current_user.is_authenticated or not current_user.is_admin:
+        return "Access denied", 403
     
-    # Create admin user if it doesn't exist
-    admin_email = 'admin@crowdfund.com'
-    if not User.query.filter_by(email=admin_email).first():
-        admin = User(
-            username='admin',
-            email=admin_email,
-            password_hash=generate_password_hash('admin123'),
-            is_admin=True
-        )
-        db.session.add(admin)
-    
-    db.session.commit()
+    try:
+        # Test database connection
+        db.session.execute('SELECT 1')
+        
+        # Get counts
+        user_count = User.query.count()
+        project_count = Project.query.count()
+        contribution_count = Contribution.query.count()
+        category_count = Category.query.count()
+        
+        # Get all users
+        users = User.query.all()
+        user_list = [f"{u.id}: {u.username} ({u.email}) - Admin: {u.is_admin}" for u in users]
+        
+        # Get all contributions
+        contributions = Contribution.query.all()
+        contrib_list = [f"ID: {c.id}, Amount: ${c.amount}, User: {c.user_id}, Project: {c.project_id}" for c in contributions]
+        
+        return f"""
+        <h2>Database Debug Info</h2>
+        <p><strong>Database URI:</strong> {app.config['SQLALCHEMY_DATABASE_URI']}</p>
+        <p><strong>Connection:</strong> ✅ Success</p>
+        
+        <h3>Counts:</h3>
+        <ul>
+            <li>Users: {user_count}</li>
+            <li>Projects: {project_count}</li>
+            <li>Contributions: {contribution_count}</li>
+            <li>Categories: {category_count}</li>
+        </ul>
+        
+        <h3>All Users:</h3>
+        <ul>{''.join([f'<li>{user}</li>' for user in user_list])}</ul>
+        
+        <h3>All Contributions:</h3>
+        <ul>{''.join([f'<li>{contrib}</li>' for contrib in contrib_list])}</ul>
+        """
+        
+    except Exception as e:
+        return f"<h2>Database Error:</h2><p>{str(e)}</p>", 500
 
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
         create_default_data()
     
-    app.run(debug=False,host ='0.0.0.0')
+    app.run(debug=True)
